@@ -1,0 +1,53 @@
+version: "2"
+
+services:
+  namenode:
+    image: leismile/hadoop-namenode:1.1.0-hadoop2.7.2-java8
+    container_name: namenode-hive
+    volumes:
+      - ./data/namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop-dss.env
+  datanode:
+    image: leismile/hadoop-datanode:1.1.0-hadoop2.7.2-java8
+    container_name: datanode-hive
+    volumes:
+      - ./data/datanode:/hadoop/dfs/data
+    env_file:
+      - ./hadoop-dss.env
+  hive-server:
+    image: leismile/hive:1.2.1-postgresql-metastore
+    container_name: hive-server
+    env_file:
+      - ./hadoop-dss.env
+    environment:
+      - "HIVE_CORE_CONF_javax_jdo_option_ConnectionURL=jdbc:postgresql://hive-metastore/metastore"
+    links:
+      - "hive-metastore"
+      - "namenode"
+    ports:
+      - "10000:10000"
+  hive-metastore:
+    image: leismile/hive:1.2.1-postgresql-metastore
+    container_name: hive-metastore
+    env_file:
+      - ./hadoop-dss.env
+    command: /opt/hive/bin/hive --service metastore
+  hive-metastore-postgresql:
+    image: leismile/hive-metastore-postgresql:1.2.1
+  dss-server:
+    image: leismile/dss:0.9.1
+    container_name: dss-server
+    env_file:
+      - ./hadoop-dss.env
+    environment:
+    links:
+      - "hive-server"
+      - "namenode"
+    ports:
+      - "8088:8088"
+
+
+
